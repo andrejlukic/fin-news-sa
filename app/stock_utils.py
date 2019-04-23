@@ -20,7 +20,7 @@ import hashlib
                 Load historical data
                 
 '''
-stock_data_dir = r'.\stocks\\'
+stock_data_dir = r'./stocks/'
 tiingo_api_key = os.environ['TiingoAPI']
 stock_remote_src = 'Tiingo'
 

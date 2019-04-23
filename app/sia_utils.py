@@ -13,7 +13,7 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import pandas as pd
 import numpy as np
 
-lex_path = r'.\lexicon_data\\'
+lex_path = r'./lexicon_data/'
 
 def init_sia():
     #nltk.download('vader_lexicon')
