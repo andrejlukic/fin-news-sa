@@ -1,0 +1,9 @@
+
+*.csv
+*.csv
+.ipynb_checkpoints/00_exploration-checkpoint.ipynb
+*.csv
+scraped/
+*.pyc
+app/log-ms.dat
+*.h5

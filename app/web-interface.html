@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Stock analysis form</title>
+  <meta name="description" content="Stock analysis form">
+  <meta name="author" content="A.L.">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+  <style>
+  .window {
+  border-radius: 3px;
+  background: #FFF;
+  color: #fff;
+  overflow: hidden;
+  position: relative;
+  margin: 0 0 auto;
+  width: 70%;
+  
+  &:before {
+    content: ' ';
+    display: block;
+    height: 48px;
+    background: #C6C6C6;
+  }
+  
+  &:after {
+    content: '. . .';
+    position: absolute;
+    left: 12px;
+    right: 0;
+    top: -3px;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 96px;
+    color: #fff;
+    line-height: 0;
+    letter-spacing: -12px;
+  }
+}
+
+.terminal {
+  margin: 20px;
+  font-family: monospace;
+  font-size: 16px;
+  color: #22da26;
+  text-align: left;
+  
+  .command { 
+    text-align: left;
+    width: 0%;
+    white-space: nowrap;
+    overflow: hidden;
+    animation: write-command 5s both;
+    
+    &:before {
+      content: '$ ';
+      color: #22da26;
+    }
+  }
+  
+  .log {
+    white-space: nowrap;
+    overflow: hidden;
+    animation: write-log 5s both;
+  }
+
+  p:nth-child(2) {
+    animation-delay: 2s;
+  }
+  
+  p:nth-child(3) {
+    animation-delay: 8s;
+  }
+}
+
+@keyframes write-command {
+  0% {
+    width: 0%;
+  }
+  
+  
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes write-log {
+  0% {
+    height: 0;
+  }
+  
+  16% {
+    height: 0;
+  }
+  
+  17% {
+    height: 18px;
+  }
+  
+  33% {
+    height: 18px;
+  }
+  
+  34% {
+    height: 37px;
+  }
+  
+  51% {
+    height: 37px;
+  }
+  
+  52% {
+    height: 55px;
+  }
+  
+  69% {
+    height: 55px;
+  }
+  
+  70% {
+    height: 74px;
+  }
+  
+  87% {
+    height: 74px;
+  }
+  
+  88% {
+    height: 92px;
+  }
+  
+  88% {
+    height: 92px;
+  }
+  
+  99% {
+    height: 92px;
+  }
+  
+  100% {
+    height: 110px;
+  }
+}
+  </style>
+<script>
+$(document).ready(function() {
+     $('form').on('submit', function(event) {
+	   $('#error').hide()
+	   $('#output').text("running ... this can take a few minutes").show();
+       $.ajax({
+          data : {
+             ticker : $('#ticker').val(),
+             search_terms: $('#search_terms').val(),
+                 },
+             type : 'POST',
+             url : 'http://127.0.0.1/getforecast',			 
+			 error: function(jqxhr, status, exception) {
+			   console.log(jqxhr.status);
+			   console.log(jqxhr.responseText);
+			   console.log(exception);
+				}
+            })
+        .done(function(data) {
+		 if(data.error != null && data.error != "")
+		 {
+			$('#output').hide();
+			$('#error').text(data.error).show();
+		 }
+		 else
+		 {
+		    $('#error').hide()
+			$('#output').text(data.output).show();
+		 }          
+		  
+      });
+      event.preventDefault();
+      });
+});
+</script>
+</head>
+<body>
+
+<!-- Default form login -->
+<form class="text-center border border-light p-5">
+
+    <p class="h4 mb-4">Forecasting stocks using LSTM and sentiment analysis testing module</p>
+
+    <!-- Email -->
+    <input type="text" id="ticker" class="form-control mb-4" placeholder="Please enter the stock symbol e.g. 'Infy'">
+
+    <!-- Password -->
+    <input type="text" id="search_terms" class="form-control mb-4" placeholder="Please enter comma separated list of terms to search for e.g. 'Infosys, Infy'">
+
+
+    <!-- Sign in button -->
+    <button class="btn btn-info btn-block my-4" type="submit">Get forecast</button>
+
+	<div class="window">
+	<div id="output" class="terminal"></div>
+	<div id="error" class="terminal"></div>    
+	</div>
+	
+
+</form>
+
+<script type="text/javascript">
+      //var socket = io.connect('http://' + document.domain + ':' + location.port);
+	  var socket = io.connect('http://127.0.0.1');	  
+        /* var form = $( 'form' ).on( 'submit', function( e ) {
+          e.preventDefault()
+          let user_name = $( 'input.username' ).val()
+          let user_input = $( 'input.message' ).val()
+          socket.emit( 'my event', {
+            user_name : user_name,
+            message : user_input
+          } )
+          $( 'input.message' ).val( '' ).focus()
+        } )
+      } ) */
+      socket.on( 'debugmsg', function( msg ) {
+        //console.log( msg )		
+        if( typeof msg !== 'undefined' ) {		  
+          $( 'div#output' ).append( '<p class="command" style="margin:0;"><span style="color: #AAA; font-size: 12px;">'+msg+'</span></p>' )
+        }
+      })
+    </script>
+</body>
+</html>
+
