@@ -18,11 +18,16 @@ socketio = SocketIO(app)
 
 @app.route("/getforecast", methods=['POST'])
 def index():    
-    ticker = request.form.get('ticker').strip()
+    #ticker = request.form.get('ticker').strip()
     search_terms = request.form.get('search_terms')
-    if(ticker and search_terms):        
+    #if(ticker and search_terms):
+    if(search_terms):        
         search_terms = search_terms.split(',')
         search_terms = [s.strip() for s in search_terms]
+        #to work with the bootstrap one input field frontend:
+        ticker = search_terms[0]
+        if(len(search_terms)>1):
+            search_terms = search_terms[1:]        
         print('Debug-Form values: {}-{}'.format(ticker,search_terms))
         #To resolve Keras error with multiple threads, clear session: (TypeError: Cannot interpret feed_dict key as Tensor:)
         clear_session()

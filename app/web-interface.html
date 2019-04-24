@@ -182,25 +182,36 @@ $(document).ready(function() {
 <body>
 
 <!-- Default form login -->
-<form class="text-center border border-light p-5">
-
+<form class="form-horizontal border border-light p-5">
+	<div class="form-group form-group-lg">
     <p class="h4 mb-4">Forecasting stocks using LSTM and sentiment analysis testing module</p>
 
-    <!-- Email -->
-    <input type="text" id="ticker" class="form-control mb-4" placeholder="Please enter the stock symbol e.g. 'Infy'">
+	<div class="form-group form-group-lg">
+    <!-- Ticker -->
+	<label class="col-sm-2 control-label" for="ticker">Stock symbol</label>
+	<div class="col-sm-5">
+    <input type="text" id="ticker" class="form-control" placeholder="Please enter the stock symbol e.g. 'Infy'">
+	</div>
+	</div>
 
-    <!-- Password -->
-    <input type="text" id="search_terms" class="form-control mb-4" placeholder="Please enter comma separated list of terms to search for e.g. 'Infosys, Infy'">
-
+    <!-- Search terms -->
+	<div class="form-group form-group-lg">
+	<label class="col-sm-2 control-label" for="search_terms">Search terms</label>
+	<div class="col-sm-5">
+    <input type="text" id="search_terms" class="form-control" placeholder="Please enter comma separated list of terms to search for e.g. 'Infosys, Infy'">
+	</div>
+	</div>
 
     <!-- Sign in button -->
+	<div class="col-sm-5">
     <button class="btn btn-info btn-block my-4" type="submit">Get forecast</button>
+	</div>
 
 	<div class="window">
 	<div id="output" class="terminal"></div>
 	<div id="error" class="terminal"></div>    
 	</div>
-	
+	</div>
 
 </form>
 

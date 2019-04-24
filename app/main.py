@@ -156,5 +156,5 @@ def current_state(stock_symbol, stock_search_terms, socketio):
     out(socketio,'Forecast: {0:.2f}$'.format(round(forecast.Prediction.iloc[-1],2))) 
     return forecast, sentiment
 
-current_state(stock_symbol, stock_search_terms, None)
+#current_state(stock_symbol, stock_search_terms, None)
 #full_history_analysis(stock_symbol, stock_search_terms)
