@@ -16,6 +16,10 @@ from flask_socketio import SocketIO
 app = Flask(__name__)
 socketio = SocketIO(app)
 
+@app.route("/", methods=['GET'])
+def frontpage():    
+    return render_template('try-bootstrap.html')
+
 @app.route("/getforecast", methods=['POST'])
 def index():    
     #ticker = request.form.get('ticker').strip()
