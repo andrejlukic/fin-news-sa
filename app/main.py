@@ -31,65 +31,65 @@ def out(socketio, msg):
     if(socketio is not None):
         socketio.emit('debugmsg', msg)
 
-def full_history_analysis(stock_symbol, stock_search_terms):
-    #start = dt.date(2014,4,20)
-    #end = dt.date(2017,6,27)
-            
-    '''    
-            Load INFY stock                    
-    '''    
-    print('1. Preparing {} stock data'.format(stock_symbol))
-    ohlc = load_stock(stock_symbol, None, None)
-    print('... received {2} data points from {0} to {1}'.format(ohlc.index.min(), ohlc.index.max(), stock_symbol))
-    plt.plot(ohlc.index, ohlc['Close'])
-    plt.show()
-    
-    '''    
-            Load articles for stock and calculate polarity for article title and for article body                
-    '''    
-    print('2. Loading all previously collected news articles.')
-    articles = au.load_news_history(stock_symbol)
-    print('... found {} articles'.format(articles.shape[0]))
-    print('3. Filtering news for keywords: [{0}]'.format(','.join(stock_search_terms)))
-    articles = au.filter_by_stock(articles, stock_search_terms)
-    print('... matched {0} ranging from {2}  to {3}'.format(articles.shape[0],stock_symbol, articles.index.min(), articles.index.max())) 
-    
-    '''                        
-            Initialize sentiment analyzer                        
-    '''
-    sia = su.init_sia()
-    print('4. Compute sentiment polarity for selected articles.')
-    articles = su.add_sentiment_polarity(sia, articles)
-    print('... done. {0}'.format(articles.shape))
-        
-    '''        
-            Sentiment: calculate average sentiment of the day
-               calculate simple signals based on sentiment
-                0 = no action
-               -1 = sell
-               +1 = buy    
-            Price - Take closing price from where Signal is BUY
-            Profit column - a series of price differences (today - yesterday closing price)
-            End Date      - take date of the price of the day for which day before was Buy and Regime=1    
-    '''
-    print('5. Backtesting preparation, compute buy/sell signals, then merge with stock dataset')
-    articles_signals = su.compute_signals(articles)
-    print('... ok signals computed {0}'.format(articles_signals.shape))
-    articles_signals = articles_signals.join(ohlc[['Close','Low']], how='inner')
-    #articles_signals = articles_signals[start:end]   
-    articles_signals = articles_signals[articles_signals['Signal'] != 0]
-    articles_signals['Profit'] = articles_signals['Close'] - articles_signals['Close'].shift(1)
-    articles_signals = articles_signals[1:]
-    print('... ok datasets merged {0}'.format(articles_signals.shape)) 
- 
-    '''
-        Backtesting general        
-    '''
-    print('6. Run backt on the dataset.')
-    res = bt.run_backtest(articles_signals)
-    print('... done. Resulting dataset: {}'.format(res.shape[0]))
-    print(res)
-    res.to_excel('test_result.xlsx')
+# def full_history_analysis(stock_symbol, stock_search_terms):
+#     #start = dt.date(2014,4,20)
+#     #end = dt.date(2017,6,27)
+#             
+#     '''    
+#             Load INFY stock                    
+#     '''    
+#     print('1. Preparing {} stock data'.format(stock_symbol))
+#     ohlc = load_stock(stock_symbol, None, None)
+#     print('... received {2} data points from {0} to {1}'.format(ohlc.index.min(), ohlc.index.max(), stock_symbol))
+#     plt.plot(ohlc.index, ohlc['Close'])
+#     plt.show()
+#     
+#     '''    
+#             Load articles for stock and calculate polarity for article title and for article body                
+#     '''    
+#     print('2. Loading all previously collected news articles.')
+#     articles = au.load_news_history(stock_symbol)
+#     print('... found {} articles'.format(articles.shape[0]))
+#     print('3. Filtering news for keywords: [{0}]'.format(','.join(stock_search_terms)))
+#     articles = au.filter_by_stock(articles, stock_search_terms)
+#     print('... matched {0} ranging from {2}  to {3}'.format(articles.shape[0],stock_symbol, articles.index.min(), articles.index.max())) 
+#     
+#     '''                        
+#             Initialize sentiment analyzer                        
+#     '''
+#     sia = su.init_sia()
+#     print('4. Compute sentiment polarity for selected articles.')
+#     articles = su.add_sentiment_polarity(sia, articles)
+#     print('... done. {0}'.format(articles.shape))
+#         
+#     '''        
+#             Sentiment: calculate average sentiment of the day
+#                calculate simple signals based on sentiment
+#                 0 = no action
+#                -1 = sell
+#                +1 = buy    
+#             Price - Take closing price from where Signal is BUY
+#             Profit column - a series of price differences (today - yesterday closing price)
+#             End Date      - take date of the price of the day for which day before was Buy and Regime=1    
+#     '''
+#     print('5. Backtesting preparation, compute buy/sell signals, then merge with stock dataset')
+#     articles_signals = su.compute_signals(articles)
+#     print('... ok signals computed {0}'.format(articles_signals.shape))
+#     articles_signals = articles_signals.join(ohlc[['Close','Low']], how='inner')
+#     #articles_signals = articles_signals[start:end]   
+#     articles_signals = articles_signals[articles_signals['Signal'] != 0]
+#     articles_signals['Profit'] = articles_signals['Close'] - articles_signals['Close'].shift(1)
+#     articles_signals = articles_signals[1:]
+#     print('... ok datasets merged {0}'.format(articles_signals.shape)) 
+#  
+#     '''
+#         Backtesting general        
+#     '''
+#     print('6. Run backt on the dataset.')
+#     res = bt.run_backtest(articles_signals)
+#     print('... done. Resulting dataset: {}'.format(res.shape[0]))
+#     print(res)
+#     res.to_excel('test_result.xlsx')
 
 def current_state(stock_symbol, stock_search_terms, socketio):        
     #start = datetime.date.today() - relativedelta(years=20)
@@ -111,7 +111,13 @@ def current_state(stock_symbol, stock_search_terms, socketio):
             Load articles for stock and calculate polarity for article title and for article body                
     '''    
     out(socketio,'2. Running news site scraper to collect fresh news articles:')
-    articles = au.load_news(stock_symbol)
+    try:
+        articles = au.load_news(stock_symbol)
+    except twisted.internet.error.ReactorNotRestartable as e:  # as e syntax added in ~python2.5
+        out(socketio,'Error: an older scraping process is still executing. This might take a few minutes. Possible solution: restart the scraper. {}'.format(e))
+        raise
+    except:       
+        raise
     sentiment = -100
     if(isinstance(articles, pd.DataFrame) and not articles.empty):
         out(socketio,'... found {} articles'.format(articles.shape[0]))
@@ -129,8 +135,9 @@ def current_state(stock_symbol, stock_search_terms, socketio):
         sia = su.init_sia()
         out(socketio,'4. Compute sentiment polarity for selected articles.')
         articles = su.add_sentiment_polarity(sia, articles)
+        articles["roll_sent"]=articles['sentiment_vader_LM_title'].rolling(3).mean()
+        sentiment=articles["roll_sent"].iloc[-1]
         out(socketio,'... done.')
-            
         '''        
                 Sentiment: calculate average sentiment of the day
                    calculate simple signals based on sentiment
@@ -152,9 +159,14 @@ def current_state(stock_symbol, stock_search_terms, socketio):
         out(socketio,'... skipping sentiment analysis, because no articles that matched selected stock symbol keywords.')
  
     out(socketio,'5. Train and apply LSTM:')
-    _,forecast,forecast1 = mlu.forecast(stock_symbol, 1)  
-    out(socketio,'Forecast: {0:.2f}$'.format(round(forecast.Prediction.iloc[-1],2))) 
-    return forecast, sentiment
+    next = mlu.forecast(stock_symbol, 1)  
+    out(socketio,'Forecast: {0:.2f}$'.format(round(next,2))) 
+    return next, sentiment
 
-#current_state(stock_symbol, stock_search_terms, None)
-#full_history_analysis(stock_symbol, stock_search_terms)
+if __name__ == '__main__':
+    f,s = current_state(stock_symbol, stock_search_terms, None)
+    print("Sentiment={}".format(s))
+    print('Forecast: {0:.2f}$'.format(f))    
+    #full_history_analysis(stock_symbol, stock_search_terms)
+
+

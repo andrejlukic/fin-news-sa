@@ -170,7 +170,7 @@ def bulid_TIs_dataset(stock_symbol, start_date, end_date, window, normalize=True
     #print(df.tail())
     return df, scaler
 
-def lstm_dataset_reshape(dataset, time_steps, future_gap, split):
+def lstm_dataset_reshape(dataset, time_steps, future_gap, split, forecast_only):
     # ['price', 'momentum', 'sma', 'bolinger_band', 'volatility', 'vroc', 'actual_price']
     print("Dataset Shape:", dataset.shape)
     X = dataset[:, :-1]
@@ -184,7 +184,9 @@ def lstm_dataset_reshape(dataset, time_steps, future_gap, split):
     X_sampled = np.array(X_sampled)
     #print("Sampled X Shape:", X_sampled.shape)
     future_gap_index = future_gap - 1
-    X_sampled = X_sampled[:-future_gap]
+    #FORECAST
+    if(not forecast_only):
+        X_sampled = X_sampled[:-future_gap]
     Y_sampled = Y[time_steps+future_gap_index: ]
     #print("Applying Future Gap...")
     #print("Sampled X Shape:", X_sampled.shape)
@@ -244,8 +246,8 @@ def test_prediction(stock_symbol, start_date, end_date, window, future_gap, time
     #print(df_train.columns)
     ds_train = df_train.values
     ds_test = df_test.values
-    X_train, Y_train = lstm_dataset_reshape(ds_train, time_steps, future_gap, None)
-    X_test, Y_test = lstm_dataset_reshape(ds_test, time_steps, future_gap, None)
+    X_train, Y_train = lstm_dataset_reshape(ds_train, time_steps, future_gap, None, False)
+    X_test, Y_test = lstm_dataset_reshape(ds_test, time_steps, future_gap, None, False)
     #building the LSTM model
     #print("\n> building the LSTM model...")
     features = X_train.shape[2]
@@ -290,6 +292,46 @@ def test_prediction(stock_symbol, start_date, end_date, window, future_gap, time
 
     return normalized_metrics, inv_normalized_metrics, df_test
 
+def predict(stock_symbol, start_date, end_date, window, future_gap, time_steps,
+              neurons, drop_out, batch_size, epochs, validation_split, verbose, callbacks):
+    #building the dataset
+    #print("> building the dataset...")    
+    
+    #reshaping the dataset for LSTM
+    #print("\n> reshaping the dataset for LSTM...")
+    #print(df_train.columns)
+    df_test, scaler = bulid_TIs_dataset(stock_symbol, start_date, end_date, window)
+    ds_test = df_test.values
+    X_test, _ = lstm_dataset_reshape(ds_test, time_steps, future_gap, None, True)
+    #building the LSTM model
+    #print("\n> building the LSTM model...")
+    if(os.path.isfile('{}.h5'.format(stock_symbol))):
+        print('\n> Loading cached model')      
+        model = keras.models.load_model('{}.h5'.format(stock_symbol))
+    else:
+        print("\n> building the LSTM model...")
+        df_train, _ = bulid_TIs_dataset(stock_symbol, None, start_date, window)
+        ds_train = df_train.values
+        X_train, Y_train = lstm_dataset_reshape(ds_train, time_steps, future_gap, None, False)
+        features = X_train.shape[2]
+        model = build_model(time_steps, features, neurons, drop_out)
+        #fitting the training data        
+        print("\n> fitting the training data...")
+        model_fit(model, X_train, Y_train, batch_size, epochs, validation_split, verbose, callbacks)
+        print('\n> saving model')
+        model.save('{}.h5'.format(stock_symbol))
+    #predictions
+    #print("\n> testing the model for predictions...")
+    # last data point:
+    #X_test = np.array([[[0.99162781, 0.46983332, 0.48282569, 1., 0.07956116, 0.25777586]]])
+    predictions = model.predict(X_test)
+    #inverse-scaling
+    #print("\n> inverse-scaling the scaled values...")
+    predictions = predictions.reshape((predictions.shape[0], 1))
+    predictions_inv_scaled = scaler.inverse_transform(predictions)
+       
+    return predictions_inv_scaled[-1][0]
+
 def forecast(stock_symbol, num_steps = 1, test_start_date = None, test_end_date = None):
     if(not test_start_date):
         test_start_date = datetime.date.today() - relativedelta(days=10)
@@ -323,16 +365,10 @@ def forecast(stock_symbol, num_steps = 1, test_start_date = None, test_end_date 
     end_date = dates_dic[stock_symbol][1]
     #print('Set date range {} - {}'.format(start_date, end_date))
     #LSTM
-    normalized_metrics, inv_normalized_metrics, df = test_prediction(stock_symbol, start_date, 
-    end_date, window, future_gap, time_steps, neurons, drop_out, batch_size, epochs, validation_split, 
-    verbose, callbacks)
-    metrics_dic['LSTM'] = normalized_metrics
-    #PAL
-    lookup = 5
-    #lag_list = compute_lag_metric(df['Actual'], df['Prediction'], lookup, stock_symbol)
-    #df = df[:len(df)-lookup+1]
-    #Price Forecast Plot    
-    return metrics_dic, df, df[:len(df)-lookup+1]
+    next = predict(stock_symbol, start_date, end_date, window, future_gap, time_steps, neurons, drop_out, batch_size, epochs, validation_split, 
+    verbose, callbacks)    
+        
+    return next
 
 #stock = 'INFY'
 #metrics_dic, df = train_lstm(stock, '2018-06-01', '2019-06-01')
