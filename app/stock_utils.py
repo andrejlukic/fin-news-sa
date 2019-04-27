@@ -38,7 +38,7 @@ def load_stock(symbol, start_date=None, end_date=None):
         df.reset_index(0, inplace=True)
         if(not df.empty):
             print('Ok. Received {} data points from {} to {}'.format(df.shape[0], df.index.min(), df.index.max()))
-            save_to_cache(df, symbol, start_date, end_date)
+            save_to_cache(df, symbol, start_date, end_date)            
             print('Saved to cache.')
         else:
             print('Received no data. Check that the stock symbol is correct.')
@@ -55,7 +55,7 @@ def get_local_cached_file(symbol, start_date, end_date):
     if not cached_file.is_file():   
         return None
     else:
-        return pd.read_csv(cached_file, parse_dates=True)
+        return pd.read_csv(cached_file, parse_dates=True, index_col='date')
 def clean_up_old_cached_files(symbol):
     list_of_files = glob.glob('{}/{}*'.format(stock_data_dir, symbol.upper())) # * means all if need specific format then *.csv    
     for old_file in list_of_files:
@@ -104,7 +104,8 @@ def display_stock(df):
 def to_internal_format(df):
     try:    
         ohlc = df[['open', 'high', 'low','close', 'adjClose', 'volume']].copy()
-        ohlc.index = pd.to_datetime(ohlc.index).date
+        #ohlc.index = pd.to_datetime(ohlc.index).date
+        ohlc.index = pd.to_datetime(ohlc.index)
         ohlc.columns = ['Open','High','Low','Close','Adj Close','Volume']
         ohlc.index.names = ['Date']
     except Exception as e:

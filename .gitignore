@@ -7,3 +7,4 @@ scraped/
 *.pyc
 app/log-ms.dat
 *.h5
+app/log-indian-news-scraper.txt

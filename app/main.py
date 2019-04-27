@@ -136,6 +136,7 @@ def current_state(stock_symbol, stock_search_terms, socketio):
         out(socketio,'4. Compute sentiment polarity for selected articles.')
         articles = su.add_sentiment_polarity(sia, articles)
         articles["roll_sent"]=articles['sentiment_vader_LM_title'].rolling(3).mean()
+        print(articles[['Title','sentiment_vader_LM_title']].tail(20))
         sentiment=articles["roll_sent"].iloc[-1]
         out(socketio,'... done.')
         '''        
@@ -161,12 +162,26 @@ def current_state(stock_symbol, stock_search_terms, socketio):
     out(socketio,'5. Train and apply LSTM:')
     next = mlu.forecast(stock_symbol, 1)  
     out(socketio,'Forecast: {0:.2f}$'.format(round(next,2))) 
-    return next, sentiment
+    
+    #prepare data for the 6M plot:
+    fromdate = datetime.date.today() - relativedelta(days=180)
+    hist6M = ohlc[fromdate:]['Adj Close']
+    
+    return next, sentiment, hist6M
 
 if __name__ == '__main__':
-    f,s = current_state(stock_symbol, stock_search_terms, None)
-    print("Sentiment={}".format(s))
-    print('Forecast: {0:.2f}$'.format(f))    
-    #full_history_analysis(stock_symbol, stock_search_terms)
+    #f,s = current_state(stock_symbol, stock_search_terms, None)
+    #print("Sentiment={}".format(s))
+    #s=sia.init_sia()
+    #print('Forecast: {0:.2f}$'.format(f))    
+    ohlc = load_stock(stock_symbol, None, None)
+    print(ohlc.head(5))
+    
+    #dti = pd.to_datetime('2019-01-01')
+    print(isinstance(ohlc.index, pd.DatetimeIndex))
+    #filter_mask = ohlc.index > dti.date
+    fromdate = datetime.date.today() - relativedelta(days=180)
+    hist3M = ohlc[fromdate:]
+    print(hist3M['Adj Close'].tolist())
 
 

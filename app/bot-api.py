@@ -35,8 +35,9 @@ def index():
         print('Debug-Form values: {}-{}'.format(ticker,search_terms))
         #To resolve Keras error with multiple threads, clear session: (TypeError: Cannot interpret feed_dict key as Tensor:)
         clear_session()
-        forecast, sentiment = current_state(ticker, search_terms, socketio)
-        return jsonify({'output':'Forecast: {0:.2f}$ - sentiment: {1:.2f}'.format(forecast, sentiment)})
+        forecast, sentiment, hist6M = current_state(ticker, search_terms, socketio)
+        return jsonify({'output':'Forecast: {0:.2f}$ - sentiment: {1:.2f}'.format(forecast, sentiment),
+                        'hist6Mval': hist6M.tolist(), 'hist6Mlab': hist6M.index.strftime('%x').tolist()})
     else:
         return jsonify({'error' : 'Please enter stock symbol and search terms!'})
 
