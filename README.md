@@ -1,8 +1,6 @@
-# Stock price prediction using sentiment polarity from news articles and deep learning
+# Stock price prediction using sentiment polarity from news articles and deep learning (failed)
 
-This is the first version and still work in progress.
-
-Sentiment from news and deep learning (LSTM) is used to help predict stock prices. The functionality is exposed via Flask API and web page as a simple frontend. It is also possible to run it from console.
+Sentiment from news and deep learning (LSTM) is used to predict stock prices (NOTE: it does not work). The functionality is exposed via Flask API and web page as a simple frontend. It is also possible to run it from console.
 
 # Usage
 
